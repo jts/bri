@@ -1,6 +1,6 @@
 # Bam Read Index (bri)
 
-`bri` is a small tool to quickly retrieve alignments in a bam file by readname. Most bam files are sorted by genomic position to allow fast sequential reading across regions of the genome. Bam does not allow random access to alignments by readname as short read sequencing would require very large readname-to-file position indices. With long read sequencing however, it is sometimes desirable to extract all of the alignments for a particular read. `bri` is designed for this usecase and provides both a command line interface and htslib-inspired API.
+`bri` is a small tool to quickly retrieve alignments in a bam file by readname. Most bam files are sorted by genomic position to allow fast sequential reading across regions of the genome. Bam does not allow random access to alignments by readname as short reads  would require very large readname-to-file position indices. With long read sequencing however, it is sometimes desirable to extract all of the alignments for a particular read. `bri` is designed for this usecase and provides both a command line interface and htslib-inspired API. The index for ~50X of nanopore data for a human genome is under 1GB.
 
 ## Installation
 
