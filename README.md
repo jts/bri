@@ -23,7 +23,8 @@ Extract the alignments for a particular read (output is in SAM):
 ```
 > bri get reads.sorted.bam ffc71c5d-5aa0-4c4c-88e8-ed686d520d8c
 
-fc71c5d-5aa0-4c4c-88e8-ed686d520d8c    0       chr10   12775107        60 1000M * *
+ffc71c5d-5aa0-4c4c-88e8-ed686d520d8c    0       chr10   12775107        60 1000M * *
+ffc71c5d-5aa0-4c4c-88e8-ed686d520d8c    2064    chr10   12773732        29 800S200M * *
 ```
 
 
