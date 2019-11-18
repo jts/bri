@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bri_index.h"
+#include "bri_get.h"
 
 int main(int argc, char** argv)
 {
@@ -21,7 +22,7 @@ int main(int argc, char** argv)
     if(strcmp(argv[1], "index") == 0) {
         bri_index_main(argc - 1, argv + 1);
     } else if(strcmp(argv[1], "get") == 0) {
-       //bri_index_main(argc - 1, argv + 1);
+       bri_get_main(argc - 1, argv + 1);
     } else {
         fprintf(stderr, "[bri] unrecognized subprogram: %s\n", argv[1]);
         exit(EXIT_FAILURE);
