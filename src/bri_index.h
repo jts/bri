@@ -46,7 +46,7 @@ typedef struct bam_read_idx
 
 // main of subprogram - build an index for a file
 // given in the command line arguments
-int bri_index_main(int argc, char** argv); 
+int bam_read_idx_index_main(int argc, char** argv); 
 
 // load the index for the specific bam file
 bam_read_idx* bam_read_idx_load(const char* input_bam);

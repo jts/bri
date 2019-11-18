@@ -296,7 +296,7 @@ void print_usage_index()
     fprintf(stderr, "usage: bri index <input.bam>\n");
 }
 
-int bri_index_main(int argc, char** argv)
+int bam_read_idx_index_main(int argc, char** argv)
 {
     int die = 0;
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
