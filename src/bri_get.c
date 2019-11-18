@@ -39,6 +39,44 @@ int compare_records_by_readname_ptr(const void* r1, const void* r2)
     return strcmp(n1, n2);
 }
 
+//
+void bam_read_idx_get_record_range(const bam_read_idx* bri, char* readname, bam_read_idx_record** start, bam_read_idx_record** end)
+{
+    // construct a query record to pass to bsearch
+    bam_read_idx_record query;
+    query.read_name.ptr = readname;
+    query.file_offset = 0;
+
+    // if rec is NULL then readname does not appear in index
+    bam_read_idx_record* rec = bsearch(&query, bri->records, bri->record_count, sizeof(bam_read_idx_record), compare_records_by_readname_ptr);
+    if(rec == NULL) {
+        *start = NULL;
+        *end = NULL;
+        return;
+    }
+
+    // rec points to a valid record, but it can be an arbitrary record in the range
+    // move start to the first record in the range, and end to be one past the end
+    size_t sri, eri;
+    sri = eri = rec - bri->records;
+    assert(bri->records[sri].file_offset = rec->file_offset);
+
+    while(sri > 0 && bri->records[sri].read_name.ptr == bri->records[sri - 1].read_name.ptr) {
+        sri -= 1;
+    }
+    assert(strcmp(bri->records[sri].read_name.ptr, readname) == 0);
+
+    do {
+        eri += 1;
+    } while(eri < (bri->record_count - 1) && bri->records[eri].read_name.ptr == bri->records[eri + 1].read_name.ptr);
+    assert(strcmp(bri->records[eri].read_name.ptr, readname) != 0);
+
+    *start = &bri->records[sri];
+    *end = &bri->records[eri];
+
+    fprintf(stderr, "query: %s start: %s end: %s\n", readname, (*start)->read_name.ptr, (*end)->read_name.ptr);
+}
+
 int bri_get_main(int argc, char** argv)
 {
     int die = 0;
@@ -69,30 +107,23 @@ int bri_get_main(int argc, char** argv)
     bam_hdr_t *h = sam_hdr_read(bam_fp);
     htsFile* out_fp = hts_open("-", "w");
 
-    //
-    bam_read_idx_record query;
-    query.read_name.ptr = readname;
-    query.file_offset = 0;
+    bam_read_idx_record* start;
+    bam_read_idx_record* end;
 
-    bam_read_idx_record* rec = bsearch(&query, bri->records, bri->record_count, sizeof(bam_read_idx_record), compare_records_by_readname_ptr);
-    if(rec == NULL) {
-        fprintf(stderr, "read not found in bri %s\n", readname);
-    } else {
-        fprintf(stderr, "read found in bri %s (%s)\n", readname, rec->read_name.ptr);
-        hts_itr_t* itr = sam_itr_queryi(NULL, HTS_IDX_REST, 0, 0);
-        assert(itr != NULL);
-        bam1_t* b = bam_init1();
-
-        // get next record
-        int ret = bgzf_seek(bam_fp->fp.bgzf, rec->file_offset, SEEK_SET);
+    bam_read_idx_get_record_range(bri, readname, &start, &end);
+    bam1_t* b = bam_init1();
+    while(start != end) {
+        int ret = bgzf_seek(bam_fp->fp.bgzf, start->file_offset, SEEK_SET);
         if(ret != 0) {
             fprintf(stderr, "[bri] bgzf_seek failed\n");
             exit(EXIT_FAILURE);
         }
 
-        int tid, beg, end;
-        itr->readrec(bam_fp->fp.bgzf, bam_fp, b, &tid, &beg, &end);
-        //int ret = sam_itr_next(bam_fp, itr, b);
+        ret = sam_read1(bam_fp, h, b);
+        if(ret < 0) {
+            fprintf(stderr, "[bri] sam_read1 failed\n");
+            exit(EXIT_FAILURE);
+        }
         
         ret = sam_write1(out_fp, h, b);
         if(ret < 0) {
@@ -100,10 +131,10 @@ int bri_get_main(int argc, char** argv)
             exit(EXIT_FAILURE);
         }
 
-        hts_itr_destroy(itr);
-        bam_destroy1(b);
+        start++;
     }
 
+    bam_destroy1(b);
     hts_close(out_fp);
     bam_hdr_destroy(h);
     hts_close(bam_fp);
