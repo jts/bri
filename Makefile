@@ -14,10 +14,9 @@ LDFLAGS ?=
 CC ?= gcc
 LIBS=-lpthread -lz
 
-#HTS_DIR = /.mounts/simpsonlab/users/jsimpson/code/nanopolish-master/htslib/
-HTS_DIR=htslib
-HTS_LIB = $(HTS_DIR)/libhts.a
-HTS_INCLUDE = -I$(HTS_DIR)/htslib
+HTSDIR=htslib
+HTS_LIB = $(HTSDIR)/libhts.a
+HTS_INCLUDE = -I$(HTSDIR)/htslib
 
 # Main programs to build
 PROGRAM = bri
