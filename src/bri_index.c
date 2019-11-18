@@ -4,7 +4,7 @@
 //---------------------------------------------------------
 //
 // bri - simple utility to provide random access to
-//         bam records by read name
+//       bam records by read name
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +13,7 @@
 #include <sam.h>
 #include <hts.h>
 #include <bgzf.h>
+#include <getopt.h>
 
 typedef struct bam_read_idx_record
 {
@@ -206,11 +207,52 @@ bam_read_idx* build_index(const char* filename)
     return bri;
 }
 
-int main(int argc, char** argv)
+enum {
+    OPT_HELP = 1,
+};
+
+static const char* shortopts = ""; // placeholder
+static const struct option longopts[] = {
+    { "help",                      no_argument,       NULL, OPT_HELP },
+    { NULL, 0, NULL, 0 }
+};
+
+void print_usage()
 {
-    char* input_bam = argv[1];
+    fprintf(stderr, "usage: bri index <input.bam>\n");
+}
+
+int bri_index_main(int argc, char** argv)
+{
+    int die = 0;
+    for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
+        switch (c) {
+            case OPT_HELP:
+                print_usage();
+                exit(EXIT_SUCCESS);
+        }
+    }
+    
+    if (argc - optind < 1) {
+        fprintf(stderr, "bri index: not enough arguments\n");
+        die = 1;
+    }
+
+    if(die) {
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+
+    char* input_bam = argv[optind++];
     bam_read_idx* bri = build_index(input_bam);
-    bam_read_idx_save(bri, "scratch/small.bam.bri");
+
+    char* out_fn = malloc(strlen(input_bam) + 5);
+    if(out_fn == NULL) {
+        exit(EXIT_FAILURE);
+    }
+    strcpy(out_fn, input_bam);
+    strcat(out_fn, ".bri");
+    bam_read_idx_save(bri, out_fn);
     bam_read_idx_destroy(bri);
     bri = NULL;
 }

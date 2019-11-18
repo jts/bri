@@ -35,8 +35,11 @@ C_SRC := $(foreach dir, $(SUBDIRS), $(wildcard $(dir)/*.c))
 # Automatically generated object names
 C_OBJ = $(C_SRC:.c=.o)
 
-bri: src/bri.c
-	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $< $(LIBS) $(HTS_LIB)
+.c.o:
+	$(CC) -o $@ -c $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $<
+
+bri: $(C_OBJ)
+	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $(C_OBJ) $(LIBS) $(HTS_LIB)
 
 .PHONY: test
 test: $(TEST_PROGRAM)
