@@ -41,7 +41,7 @@ bam_read_idx* bam_read_idx_init()
 //
 void bam_read_idx_destroy(bam_read_idx* bri)
 {
-#ifdef BRI_DEBUG
+#ifdef BRI_INDEX_DEBUG
     fprintf(stderr, "[bri-destroy] %zu name bytes %zu records\n", bri->name_count_bytes, bri->record_count);
 #endif
     free(bri->readnames);
@@ -117,7 +117,7 @@ void bam_read_idx_save(bam_read_idx* bri, const char* filename)
         bam_read_idx_record brir = bri->records[i];
         brir.read_name.offset = disk_offsets_by_record[i];
         fwrite(&brir, sizeof(brir), 1, fp);
-#ifdef BRI_DEBUG
+#ifdef BRI_INDEX_DEBUG
         fprintf(stderr, "[bri-save] record %zu %s name offset: %zu file offset: %zu\n", 
             i, bri->readnames + bri->records[i].read_name.offset, disk_offsets_by_record[i], bri->records[i].file_offset);
 #endif

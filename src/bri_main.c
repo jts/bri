@@ -11,6 +11,7 @@
 #include <string.h>
 #include "bri_index.h"
 #include "bri_get.h"
+#include "bri_test.h"
 
 int main(int argc, char** argv)
 {
@@ -23,6 +24,8 @@ int main(int argc, char** argv)
         bam_read_idx_index_main(argc - 1, argv + 1);
     } else if(strcmp(argv[1], "get") == 0) {
        bam_read_idx_get_main(argc - 1, argv + 1);
+    } else if(strcmp(argv[1], "test") == 0) {
+        bam_read_idx_test_main(argc - 1, argv + 1);
     } else {
         fprintf(stderr, "[bri] unrecognized subprogram: %s\n", argv[1]);
         exit(EXIT_FAILURE);

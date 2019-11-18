@@ -60,7 +60,7 @@ void bam_read_idx_get_range(const bam_read_idx* bri, char* readname, bam_read_id
     // move start to the first record in the range, and end to be one past the end
     size_t sri, eri;
     sri = eri = rec - bri->records;
-    assert(bri->records[sri].file_offset = rec->file_offset);
+    assert(bri->records[sri].file_offset == rec->file_offset);
 
     while(sri > 0 && bri->records[sri].read_name.ptr == bri->records[sri - 1].read_name.ptr) {
         sri -= 1;
@@ -69,9 +69,9 @@ void bam_read_idx_get_range(const bam_read_idx* bri, char* readname, bam_read_id
 
     do {
         eri += 1;
-    } while(eri < (bri->record_count - 1) && bri->records[eri].read_name.ptr == bri->records[eri + 1].read_name.ptr);
-    assert(strcmp(bri->records[eri].read_name.ptr, readname) != 0);
-
+    } while(eri < bri->record_count && bri->records[eri].read_name.ptr == bri->records[sri].read_name.ptr);
+    assert(eri == bri->record_count || strcmp(bri->records[eri].read_name.ptr, readname) != 0);
+    //fprintf(stderr, "r: %zu sri: %zu eri: %zu\n", rec - bri->records, sri, eri);
     *start = &bri->records[sri];
     *end = &bri->records[eri];
 }
