@@ -7,7 +7,7 @@
 //       bam records by read name
 //
 
-// for qsort_r
+// avoid warnings in qsort_r
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -53,13 +53,13 @@ void bam_read_idx_destroy(bam_read_idx* bri)
     free(bri);
 }
 
-//
+// comparison function used by quicksort, names pointers to a block of C strings
+// and allows us to indirectly sorted records by their offset.
 int compare_records_by_readname_offset(const void* r1, const void* r2, void* names)
 {
     const char* cnames = (const char*)names;
     const char* n1 = cnames + ((bam_read_idx_record*)r1)->read_name.offset;
     const char* n2 = cnames + ((bam_read_idx_record*)r2)->read_name.offset;
-
     return strcmp(n1, n2);
 }
 
@@ -131,7 +131,7 @@ void bam_read_idx_save(bam_read_idx* bri, const char* filename)
     fclose(fp);
 }
 
-//
+// add a record to the index, growing the dynamic arrays as necessary
 void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 {
     // 
@@ -182,7 +182,7 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 }
 
 //
-bam_read_idx* build_index(const char* filename)
+bam_read_idx* bam_read_idx_build(const char* filename)
 {
     htsFile *fp = hts_open(filename, "r");
     if(fp == NULL) {
@@ -218,6 +218,8 @@ bam_read_idx* build_index(const char* filename)
     return bri;
 }
 
+// make the index filename based on the name of input_bam
+// caller must free the returned pointer
 char* generate_index_filename(const char* input_bam) 
 {
     char* out_fn = malloc(strlen(input_bam) + 5);
@@ -281,6 +283,9 @@ bam_read_idx* bam_read_idx_load(const char* input_bam)
     return bri;
 }
 
+//
+// Getopt
+//
 enum {
     OPT_HELP = 1,
 };
@@ -291,11 +296,13 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 }
 };
 
+//
 void print_usage_index()
 {
     fprintf(stderr, "usage: bri index <input.bam>\n");
 }
 
+//
 int bam_read_idx_index_main(int argc, char** argv)
 {
     int die = 0;
@@ -318,7 +325,7 @@ int bam_read_idx_index_main(int argc, char** argv)
     }
 
     char* input_bam = argv[optind++];
-    bam_read_idx* bri = build_index(input_bam);
+    bam_read_idx* bri = bam_read_idx_build(input_bam);
 
     char* out_fn = generate_index_filename(input_bam);
 

@@ -14,6 +14,9 @@
 #include <hts.h>
 #include <bgzf.h>
 
+// An entry record in the index, storing
+// either an offset or pointer to the readname
+// and a position in the bgzf-compressed bam file.
 typedef struct bam_read_idx_record
 {
     // When building the index and storing it on disk
@@ -30,6 +33,10 @@ typedef struct bam_read_idx_record
 } bam_read_idx_record;
 
 //
+// The index itself consists of two parts, 
+//  1) a memory block containing the names of every indexed read
+//  2) records (see above) describing the position in the file for each alignment
+//
 typedef struct bam_read_idx
 {
     // read names are stored contiguously in one large block
@@ -44,13 +51,18 @@ typedef struct bam_read_idx
     bam_read_idx_record* records;
 } bam_read_idx;
 
-// main of subprogram - build an index for a file
-// given in the command line arguments
-int bam_read_idx_index_main(int argc, char** argv); 
-
-// load the index for the specific bam file
+// load the index for input_bam file
+// returns a pointer to the index, which must be deallocated by
+// the caller using bam_read_idx_destroy.
 bam_read_idx* bam_read_idx_load(const char* input_bam);
+
+// construct the index for input_bam and return a pointer to it
+// the index must be deallocated by the caller using bam_read_idx_destroy
+bam_read_idx* bam_read_idx_build(const char* input_bam);
 
 // cleanup the index by deallocating everything
 void bam_read_idx_destroy(bam_read_idx* bri);
 
+// main of subprogram - build an index for a file
+// given in the command line arguments
+int bam_read_idx_index_main(int argc, char** argv); 

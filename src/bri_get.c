@@ -16,6 +16,9 @@
 #include <getopt.h>
 #include "bri_index.h"
 
+//
+// Getopt
+//
 enum {
     OPT_HELP = 1,
 };
@@ -31,7 +34,7 @@ void print_usage_get()
     fprintf(stderr, "usage: bri get <input.bam> <readname>\n");
 }
 
-//
+// comparator used by bsearch, direct strcmp through the name pointer
 int compare_records_by_readname_ptr(const void* r1, const void* r2)
 {
     const char* n1 = ((bam_read_idx_record*)r1)->read_name.ptr;
