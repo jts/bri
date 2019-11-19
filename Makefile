@@ -14,9 +14,14 @@ LDFLAGS ?=
 CC ?= gcc
 LIBS=-lpthread -lz
 
-HTSDIR=htslib
+# If HTSDIR is not set, default to system-wide htslib
+ifndef HTSDIR
+HTS_LIB=-lhts
+HTS_INCLUDE=
+else
 HTS_LIB = $(HTSDIR)/libhts.a
 HTS_INCLUDE = -I$(HTSDIR)/htslib
+endif
 
 # Main programs to build
 PROGRAM = bri
