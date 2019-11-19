@@ -14,9 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <sam.h>
-#include <hts.h>
-#include <bgzf.h>
 #include <getopt.h>
 #include "bri_index.h"
 

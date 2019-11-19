@@ -17,10 +17,10 @@ LIBS=-lpthread -lz
 # If HTSDIR is not set, default to system-wide htslib
 ifndef HTSDIR
 HTS_LIB=-lhts
-HTS_INCLUDE=-I/usr/local/include/htslib
+HTS_INCLUDE=
 else
 HTS_LIB = $(HTSDIR)/libhts.a
-HTS_INCLUDE = -I$(HTSDIR)/htslib
+HTS_INCLUDE = -I$(HTSDIR)/
 endif
 
 # Main programs to build

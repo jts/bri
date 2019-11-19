@@ -6,13 +6,16 @@
 // bri - simple utility to provide random access to
 //       bam records by read name
 //
+#ifndef BAM_READ_IDX_INDEX
+#define BAM_READ_IDX_INDEX
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <sam.h>
-#include <hts.h>
-#include <bgzf.h>
+#include <htslib/sam.h>
+#include <htslib/hts.h>
+#include <htslib/bgzf.h>
 
 // An entry record in the index, storing
 // either an offset or pointer to the readname
@@ -65,4 +68,6 @@ void bam_read_idx_destroy(bam_read_idx* bri);
 
 // main of subprogram - build an index for a file
 // given in the command line arguments
-int bam_read_idx_index_main(int argc, char** argv); 
+int bam_read_idx_index_main(int argc, char** argv);
+
+#endif
