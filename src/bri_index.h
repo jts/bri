@@ -29,7 +29,7 @@ typedef struct bam_read_idx_record
     // convert the offset into a direct pointer.
     union read_name {
         size_t offset;
-        char* ptr;
+        const char* ptr;
     } read_name;
 
     size_t file_offset;   

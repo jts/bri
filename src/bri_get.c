@@ -40,7 +40,7 @@ int compare_records_by_readname_ptr(const void* r1, const void* r2)
 }
 
 //
-void bam_read_idx_get_range(const bam_read_idx* bri, char* readname, bam_read_idx_record** start, bam_read_idx_record** end)
+void bam_read_idx_get_range(const bam_read_idx* bri, const char* readname, bam_read_idx_record** start, bam_read_idx_record** end)
 {
     // construct a query record to pass to bsearch
     bam_read_idx_record query;

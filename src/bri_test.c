@@ -60,9 +60,9 @@ int bam_read_idx_test_main(int argc, char** argv)
     bam1_t* b = bam_init1();
 
     // iterate over each record and run get on each readname
-    char* prev_readname = NULL;
+    const char* prev_readname = NULL;
     for(size_t ri = 0; ri < bri->record_count; ++ri) {
-        char* readname = bri->records[ri].read_name.ptr;
+        const char* readname = bri->records[ri].read_name.ptr;
 
         // skip if same as previous readname
         if(readname == prev_readname) {

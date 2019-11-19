@@ -22,7 +22,7 @@
 // otherwise start will point at the first record with readname 
 // and end will point to one-past the last record with readname
 void bam_read_idx_get_range(const bam_read_idx* bri, 
-                            char* readname, 
+                            const char* readname, 
                             bam_read_idx_record** start, 
                             bam_read_idx_record** end);
 
