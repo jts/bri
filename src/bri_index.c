@@ -228,6 +228,12 @@ char* generate_index_filename(const char* input_bam)
     return out_fn;
 }
 
+void print_error_and_exit(const char* msg)
+{
+    fprintf(stderr, "[bri] %s\n", msg);
+    exit(EXIT_FAILURE);
+}
+
 //
 bam_read_idx* bam_read_idx_load(const char* input_bam)
 {
@@ -241,14 +247,24 @@ bam_read_idx* bam_read_idx_load(const char* input_bam)
     bam_read_idx* bri = bam_read_idx_init();
     size_t file_version;
     // currently ignored
-    fread(&file_version, sizeof(file_version), 1, fp);
+    int bytes_read = fread(&file_version, sizeof(file_version), 1, fp);
+    if(bytes_read <= 0) {
+        print_error_and_exit("read error");
+    }
 
     // read size of readames segment
-    fread(&bri->name_count_bytes, sizeof(bri->name_count_bytes), 1, fp);
+    bytes_read = fread(&bri->name_count_bytes, sizeof(bri->name_count_bytes), 1, fp);
+    if(bytes_read <= 0) {
+        print_error_and_exit("read error");
+    }
     bri->name_capacity_bytes = bri->name_count_bytes;
 
     // read number of records on disk
-    fread(&bri->record_count, sizeof(bri->record_count), 1, fp);
+    bytes_read = fread(&bri->record_count, sizeof(bri->record_count), 1, fp);
+    if(bytes_read <= 0) {
+        print_error_and_exit("read error");
+    }
+
     bri->record_capacity = bri->record_count;
 
     // allocate filenames
@@ -262,10 +278,16 @@ bam_read_idx* bam_read_idx_load(const char* input_bam)
     bri->records = malloc(bri->record_capacity * sizeof(bam_read_idx_record));
 
     // read the names
-    fread(bri->readnames, bri->name_count_bytes, 1, fp);
+    bytes_read = fread(bri->readnames, bri->name_count_bytes, 1, fp);
+    if(bytes_read <= 0) {
+        print_error_and_exit("read error");
+    }
 
     // read the records
-    fread(bri->records, bri->record_count, sizeof(bam_read_idx_record), fp);
+    bytes_read = fread(bri->records, bri->record_count, sizeof(bam_read_idx_record), fp);
+    if(bytes_read <= 0) {
+        print_error_and_exit("read error");
+    }
 
     // convert read name offsets to direct pointers
     for(size_t i = 0; i < bri->record_count; ++i) {
