@@ -43,7 +43,7 @@ C_OBJ = $(C_SRC:.c=.o)
 	$(CC) -o $@ -c $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $<
 
 bri: $(C_OBJ)
-	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $(C_OBJ) $(LIBS) $(HTS_LIB)
+	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(HTS_INCLUDE) -fPIC $(C_OBJ) $(HTS_LIB) $(LIBS)
 
 .PHONY: test
 test: $(TEST_PROGRAM)
