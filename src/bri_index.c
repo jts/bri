@@ -19,6 +19,19 @@
 
 //#define BRI_INDEX_DEBUG 1
 
+// make the index filename based on the name of input_bam
+// caller must free the returned pointer
+char* generate_index_filename(const char* input_bam) 
+{
+    char* out_fn = malloc(strlen(input_bam) + 5);
+    if(out_fn == NULL) {
+        exit(EXIT_FAILURE);
+    }
+    strcpy(out_fn, input_bam);
+    strcat(out_fn, ".bri");
+    return out_fn;
+}
+
 //
 bam_read_idx* bam_read_idx_init()
 {
@@ -179,7 +192,7 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 }
 
 //
-bam_read_idx* bam_read_idx_build(const char* filename)
+void bam_read_idx_build(const char* filename)
 {
     htsFile *fp = hts_open(filename, "r");
     if(fp == NULL) {
@@ -212,20 +225,12 @@ bam_read_idx* bam_read_idx_build(const char* filename)
     bam_destroy1(b);
     hts_close(fp);
 
-    return bri;
-}
+    // save to disk and cleanup
+    char* out_fn = generate_index_filename(filename);
+    bam_read_idx_save(bri, out_fn);
+    free(out_fn);
 
-// make the index filename based on the name of input_bam
-// caller must free the returned pointer
-char* generate_index_filename(const char* input_bam) 
-{
-    char* out_fn = malloc(strlen(input_bam) + 5);
-    if(out_fn == NULL) {
-        exit(EXIT_FAILURE);
-    }
-    strcpy(out_fn, input_bam);
-    strcat(out_fn, ".bri");
-    return out_fn;
+    bam_read_idx_destroy(bri);
 }
 
 void print_error_and_exit(const char* msg)
@@ -344,12 +349,5 @@ int bam_read_idx_index_main(int argc, char** argv)
     }
 
     char* input_bam = argv[optind++];
-    bam_read_idx* bri = bam_read_idx_build(input_bam);
-
-    char* out_fn = generate_index_filename(input_bam);
-
-    bam_read_idx_save(bri, out_fn);
-    bam_read_idx_destroy(bri);
-    free(out_fn);
-    bri = NULL;
+    bam_read_idx_build(input_bam);
 }

@@ -32,11 +32,11 @@ typedef struct bam_read_idx_record
         const char* ptr;
     } read_name;
 
-    size_t file_offset;   
+    size_t file_offset;
 } bam_read_idx_record;
 
 //
-// The index itself consists of two parts, 
+// The index itself consists of two parts,
 //  1) a memory block containing the names of every indexed read
 //  2) records (see above) describing the position in the file for each alignment
 //
@@ -59,9 +59,9 @@ typedef struct bam_read_idx
 // the caller using bam_read_idx_destroy.
 bam_read_idx* bam_read_idx_load(const char* input_bam);
 
-// construct the index for input_bam and return a pointer to it
-// the index must be deallocated by the caller using bam_read_idx_destroy
-bam_read_idx* bam_read_idx_build(const char* input_bam);
+// construct the index for input_bam and save it to disk
+// to use the created index bam_read_idx_load should be called
+void bam_read_idx_build(const char* input_bam);
 
 // cleanup the index by deallocating everything
 void bam_read_idx_destroy(bam_read_idx* bri);
