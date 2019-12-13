@@ -213,7 +213,7 @@ void bam_read_idx_build(const char* filename)
             bam_read_idx_record brir = bri->records[bri->record_count - 1];
 #ifdef BRI_INDEX_DEBUG
             fprintf(stderr, "[bri-build] record %zu [%zu %zu] chr: %s:%d read: %s\n", 
-                bri->record_count, brir.read_name.offset, brir.file_offset, h->target_name[b->core.tid], b->core.pos, bri->readnames + brir.read_name.offset);
+                bri->record_count, brir.read_name.offset, brir.file_offset, b->core.tid >= 0 ? h->target_name[b->core.tid] : "*", b->core.pos, bri->readnames + brir.read_name.offset);
 #endif
         }
 
