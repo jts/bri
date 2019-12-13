@@ -12,6 +12,7 @@
 #include "bri_index.h"
 #include "bri_get.h"
 #include "bri_test.h"
+#include "bri_benchmark.h"
 
 #define BRI_VERSION "0.2"
 
@@ -33,6 +34,8 @@ int main(int argc, char** argv)
        bam_read_idx_get_main(argc - 1, argv + 1);
     } else if(strcmp(argv[1], "test") == 0) {
         bam_read_idx_test_main(argc - 1, argv + 1);
+    } else if(strcmp(argv[1], "benchmark") == 0) {
+        bam_read_idx_benchmark_main(argc - 1, argv + 1);
     } else if(strcmp(argv[1], "version") == 0) {
         print_version();
     } else {
