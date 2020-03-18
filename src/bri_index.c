@@ -148,7 +148,7 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
     // add readname to collection
     //
     size_t len = strlen(readname) + 1;
-    if(bri->name_count_bytes + len > bri->name_capacity_bytes) {
+    if(bri->name_capacity_bytes <= bri->name_count_bytes + len) {
 
         // if already allocated double size, if initialization start with 1Mb
         bri->name_capacity_bytes = bri->name_capacity_bytes > 0 ? 2 * bri->name_capacity_bytes : 1024*1024;
