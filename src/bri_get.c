@@ -120,7 +120,6 @@ int bam_read_idx_get_main(int argc, char** argv)
     }
 
     char* input_bam = argv[optind++];
-    char* readname = argv[optind++];
 
     bam_read_idx* bri = bam_read_idx_load(input_bam, input_bri);
     
@@ -131,21 +130,24 @@ int bam_read_idx_get_main(int argc, char** argv)
     bam_read_idx_record* start;
     bam_read_idx_record* end;
 
-    bam_read_idx_get_range(bri, readname, &start, &end);
-    bam1_t* b = bam_init1();
-    while(start != end) {
-        
-        bam_read_idx_get_by_record(bam_fp, h, b, start);
-        int ret = sam_write1(out_fp, h, b);
-        if(ret < 0) {
-            fprintf(stderr, "[bri] sam_write1 failed\n");
-            exit(EXIT_FAILURE);
-        }
+    for(int i = optind; i < argc; i++) {
+        char* readname = argv[i];
+        bam_read_idx_get_range(bri, readname, &start, &end);
+        bam1_t* b = bam_init1();
+        while(start != end) {
+            
+            bam_read_idx_get_by_record(bam_fp, h, b, start);
+            int ret = sam_write1(out_fp, h, b);
+            if(ret < 0) {
+                fprintf(stderr, "[bri] sam_write1 failed\n");
+                exit(EXIT_FAILURE);
+            }
 
-        start++;
+            start++;
+        }
+        bam_destroy1(b);
     }
 
-    bam_destroy1(b);
     hts_close(out_fp);
     bam_hdr_destroy(h);
     hts_close(bam_fp);

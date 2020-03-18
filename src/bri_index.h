@@ -61,7 +61,7 @@ bam_read_idx* bam_read_idx_load(const char* input_bam, const char* input_bri);
 
 // construct the index for input_bam and save it to disk
 // to use the created index bam_read_idx_load should be called
-void bam_read_idx_build(const char* input_bam, const char* input_bri);
+void bam_read_idx_build(const char* input_bam, const char* output_bri);
 
 // cleanup the index by deallocating everything
 void bam_read_idx_destroy(bam_read_idx* bri);
