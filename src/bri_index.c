@@ -22,14 +22,25 @@
 
 // make the index filename based on the name of input_bam
 // caller must free the returned pointer
-char* generate_index_filename(const char* input_bam) 
+char* generate_index_filename(const char* input_bam, const char* input_bri) 
 {
-    char* out_fn = malloc(strlen(input_bam) + 5);
-    if(out_fn == NULL) {
-        exit(EXIT_FAILURE);
+    char* out_fn;
+
+    if(input_bri != NULL) {
+        out_fn = malloc(strlen(input_bri));
+        if(out_fn == NULL) {
+            exit(EXIT_FAILURE);
+        }
+        strcpy(out_fn, input_bri);
+    } else {
+        out_fn = malloc(strlen(input_bam) + 5);
+        if(out_fn == NULL) {
+            exit(EXIT_FAILURE);
+        }
+        strcpy(out_fn, input_bam);
+        strcat(out_fn, ".bri");
     }
-    strcpy(out_fn, input_bam);
-    strcat(out_fn, ".bri");
+
     return out_fn;
 }
 
@@ -193,10 +204,11 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 }
 
 //
-void bam_read_idx_build(const char* filename)
+void bam_read_idx_build(const char* filename, const char* output_bri)
 {
     htsFile *fp = hts_open(filename, "r");
     if(fp == NULL) {
+        fprintf(stderr, "[bri] could not open %s\n", filename);
         exit(EXIT_FAILURE);
     }
 
@@ -227,10 +239,10 @@ void bam_read_idx_build(const char* filename)
     hts_close(fp);
 
     // save to disk and cleanup
-    char* out_fn = generate_index_filename(filename);
+    char* out_fn = generate_index_filename(filename, output_bri);
     bam_read_idx_save(bri, out_fn);
-    free(out_fn);
 
+    free(out_fn);
     bam_read_idx_destroy(bri);
 }
 
@@ -241,9 +253,9 @@ void print_error_and_exit(const char* msg)
 }
 
 //
-bam_read_idx* bam_read_idx_load(const char* input_bam)
+bam_read_idx* bam_read_idx_load(const char* input_bam, const char* input_bri)
 {
-    char* index_fn = generate_index_filename(input_bam);
+    char* index_fn = generate_index_filename(input_bam, input_bri);
     FILE* fp = fopen(index_fn, "rb");
     if(fp == NULL) {
         fprintf(stderr, "[bri] index file not found for %s\n", input_bam);
@@ -315,27 +327,32 @@ enum {
     OPT_HELP = 1,
 };
 
-static const char* shortopts = ""; // placeholder
+static const char* shortopts = ":i:"; // placeholder
 static const struct option longopts[] = {
     { "help",                      no_argument,       NULL, OPT_HELP },
+    { "index",               required_argument,       NULL,      'i' },
     { NULL, 0, NULL, 0 }
 };
 
 //
 void print_usage_index()
 {
-    fprintf(stderr, "usage: bri index <input.bam>\n");
+    fprintf(stderr, "usage: bri index [-v] [-i <index_filename.bri>] <input.bam>\n");
 }
 
 //
 int bam_read_idx_index_main(int argc, char** argv)
 {
+    char* output_bri = NULL;
+
     int die = 0;
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
             case OPT_HELP:
                 print_usage_index();
                 exit(EXIT_SUCCESS);
+            case 'i':
+                output_bri = optarg;
         }
     }
     
@@ -350,5 +367,7 @@ int bam_read_idx_index_main(int argc, char** argv)
     }
 
     char* input_bam = argv[optind++];
-    bam_read_idx_build(input_bam);
+    bam_read_idx_build(input_bam, output_bri);
+
+    return 0;
 }

@@ -20,15 +20,16 @@ enum {
     OPT_HELP = 1,
 };
 
-static const char* shortopts = ""; // placeholder
+static const char* shortopts = ":i:"; // placeholder
 static const struct option longopts[] = {
     { "help",                      no_argument,       NULL, OPT_HELP },
+    { "index",               required_argument,       NULL,      'i' },
     { NULL, 0, NULL, 0 }
 };
 
 void print_usage_get()
 {
-    fprintf(stderr, "usage: bri get <input.bam> <readname>\n");
+    fprintf(stderr, "usage: bri get [-i <index_filename.bri>] <input.bam> <readname>\n");
 }
 
 // comparator used by bsearch, direct strcmp through the name pointer
@@ -95,12 +96,16 @@ void bam_read_idx_get_by_record(htsFile* fp, bam_hdr_t* hdr, bam1_t* b, bam_read
 //
 int bam_read_idx_get_main(int argc, char** argv)
 {
+    char* input_bri = NULL;
+
     int die = 0;
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
         switch (c) {
             case OPT_HELP:
                 print_usage_get();
                 exit(EXIT_SUCCESS);
+            case 'i':
+                input_bri = optarg;
         }
     }
     
@@ -117,7 +122,7 @@ int bam_read_idx_get_main(int argc, char** argv)
     char* input_bam = argv[optind++];
     char* readname = argv[optind++];
 
-    bam_read_idx* bri = bam_read_idx_load(input_bam);
+    bam_read_idx* bri = bam_read_idx_load(input_bam, input_bri);
     
     htsFile* bam_fp = hts_open(input_bam, "r");
     bam_hdr_t* h = sam_hdr_read(bam_fp);
@@ -146,4 +151,6 @@ int bam_read_idx_get_main(int argc, char** argv)
     hts_close(bam_fp);
     bam_read_idx_destroy(bri);
     bri = NULL;
+
+    return 0;
 }
