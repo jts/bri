@@ -19,6 +19,7 @@
 #include "sort_r.h"
 
 //#define BRI_INDEX_DEBUG 1
+char verbose = 0;
 
 // make the index filename based on the name of input_bam
 // caller must free the returned pointer
@@ -127,10 +128,10 @@ void bam_read_idx_save(bam_read_idx* bri, const char* filename)
             disk_offsets_by_record[i] = disk_offsets_by_record[i - 1];
         }
 
-        /*
+#ifdef BRI_INDEX_DEBUG
         fprintf(stderr, "record %zu name: %s redundant: %d do: %zu offset: %zu\n", 
             i, bri->readnames + bri->records[i].read_name.offset, redundant, disk_offsets_by_record[i], bri->records[i].file_offset);
-        */
+#endif
     }
 
     // Pass 2: write the records, getting the read name offset from the disk offset (rather than
@@ -164,7 +165,9 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 
         // if already allocated double size, if initialization start with 1Mb
         bri->name_capacity_bytes = bri->name_capacity_bytes > 0 ? 2 * bri->name_capacity_bytes : 1024*1024;
-        //fprintf(stderr, "[bri] allocating %zu bytes for names\n", bri->name_capacity_bytes);
+#ifdef BRI_INDEX_DEBUG
+        fprintf(stderr, "[bri] allocating %zu bytes for names\n", bri->name_capacity_bytes);
+#endif
     
         bri->readnames = realloc(bri->readnames, bri->name_capacity_bytes);
         if(bri->readnames == NULL) {
@@ -176,7 +179,7 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
     // in principle this incoming name can be so larger than doubling the size
     // doesn't allow it to fit. This really shouldn't happen so we'll just exit here
     if(bri->name_capacity_bytes <= bri->name_count_bytes + len) {
-        //fprintf(stderr, "[bri] incoming name with length %zu is too large\n", len);
+        fprintf(stderr, "[bri] incoming name with length %zu is too large (%zu %zu)\n", len, bri->name_count_bytes + len, bri->name_capacity_bytes);
         exit(EXIT_FAILURE);
     }
 
@@ -221,13 +224,15 @@ void bam_read_idx_build(const char* filename, const char* output_bri)
     while ((ret = sam_read1(fp, h, b)) >= 0) {
         char* readname = bam_get_qname(b);
         bam_read_idx_add(bri, readname, file_offset);
-        if(bri->record_count % 10000 == 0) {
 
-            bam_read_idx_record brir = bri->records[bri->record_count - 1];
-#ifdef BRI_INDEX_DEBUG
-            fprintf(stderr, "[bri-build] record %zu [%zu %zu] chr: %s:%d read: %s\n", 
-                bri->record_count, brir.read_name.offset, brir.file_offset, b->core.tid >= 0 ? h->target_name[b->core.tid] : "*", b->core.pos, bri->readnames + brir.read_name.offset);
-#endif
+        bam_read_idx_record brir = bri->records[bri->record_count - 1];
+        if(verbose && (bri->record_count == 1 || bri->record_count % 100000 == 0)) {
+            fprintf(stderr, "[bri-build] record %zu [%zu %zu] %s\n",
+                bri->record_count,
+                brir.read_name.offset,
+                brir.file_offset,
+                bri->readnames + brir.read_name.offset
+            );
         }
 
         // update offset for next record
@@ -239,8 +244,16 @@ void bam_read_idx_build(const char* filename, const char* output_bri)
     hts_close(fp);
 
     // save to disk and cleanup
+    if(verbose) {
+        fprintf(stderr, "[bri-build] writing to disk...\n");
+    }
+
     char* out_fn = generate_index_filename(filename, output_bri);
     bam_read_idx_save(bri, out_fn);
+
+    if(verbose) {
+        fprintf(stderr, "[bri-build] wrote index for %zu records.\n", bri->record_count);
+    }
 
     free(out_fn);
     bam_read_idx_destroy(bri);
@@ -327,10 +340,11 @@ enum {
     OPT_HELP = 1,
 };
 
-static const char* shortopts = ":i:"; // placeholder
+static const char* shortopts = ":i:v"; // placeholder
 static const struct option longopts[] = {
     { "help",                      no_argument,       NULL, OPT_HELP },
     { "index",               required_argument,       NULL,      'i' },
+    { "verbose",                   no_argument,       NULL,      'v' },
     { NULL, 0, NULL, 0 }
 };
 
@@ -353,6 +367,10 @@ int bam_read_idx_index_main(int argc, char** argv)
                 exit(EXIT_SUCCESS);
             case 'i':
                 output_bri = optarg;
+                break;
+            case 'v':
+                verbose = 1;
+                break;
         }
     }
     
