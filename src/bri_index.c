@@ -207,11 +207,11 @@ void bam_read_idx_add(bam_read_idx* bri, const char* readname, size_t offset)
 }
 
 //
-void bam_read_idx_build(const char* filename, const char* output_bri)
+void bam_read_idx_build(const char* filename, const char* output_bri, int threads, int every)
 {
     htsFile *fp = hts_open(filename, "r");
     if(fp == NULL) {
-        fprintf(stderr, "[bri] could not open %s\n", filename);
+        fprintf(stderr, "[bri-build] could not open %s\n", filename);
         exit(EXIT_FAILURE);
     }
 
@@ -219,16 +219,27 @@ void bam_read_idx_build(const char* filename, const char* output_bri)
 
     bam1_t* b = bam_init1();
     bam_hdr_t *h = sam_hdr_read(fp);
+
+    htsThreadPool p = {NULL, 0};
+    if (threads > 1 ) {
+        p.pool = hts_tpool_init(threads);
+        hts_set_opt(fp, HTS_OPT_THREAD_POOL, &p);
+    }
+
     int ret = 0;
+    int idx = -1;
     size_t file_offset = bgzf_tell(fp->fp.bgzf);
     while ((ret = sam_read1(fp, h, b)) >= 0) {
+        idx++;
+        if (idx % every != 0) continue;
         char* readname = bam_get_qname(b);
         bam_read_idx_add(bri, readname, file_offset);
 
         bam_read_idx_record brir = bri->records[bri->record_count - 1];
-        if(verbose && (bri->record_count == 1 || bri->record_count % 100000 == 0)) {
+        if(verbose && 
+                (bri->record_count == 1 || bri->record_count % 100000 == 0 || (every != 1))) {
             fprintf(stderr, "[bri-build] record %zu [%zu %zu] %s\n",
-                bri->record_count,
+                bri->record_count == 1 ? 1 : bri->record_count * every,
                 brir.read_name.offset,
                 brir.file_offset,
                 bri->readnames + brir.read_name.offset
@@ -242,6 +253,9 @@ void bam_read_idx_build(const char* filename, const char* output_bri)
     bam_hdr_destroy(h);
     bam_destroy1(b);
     hts_close(fp);
+    if (p.pool) { // must be after fp
+        hts_tpool_destroy(p.pool);
+    }
 
     // save to disk and cleanup
     if(verbose) {
@@ -340,24 +354,28 @@ enum {
     OPT_HELP = 1,
 };
 
-static const char* shortopts = ":i:v"; // placeholder
+static const char* shortopts = "hvi:t:e:"; // placeholder
 static const struct option longopts[] = {
     { "help",                      no_argument,       NULL, OPT_HELP },
     { "index",               required_argument,       NULL,      'i' },
     { "verbose",                   no_argument,       NULL,      'v' },
-    { NULL, 0, NULL, 0 }
+    { "threads",             optional_argument,       NULL,      't' },
+    { "every",               optional_argument,       NULL,      'e' },
+    { NULL, 0, 0, 0 }
 };
 
 //
 void print_usage_index()
 {
-    fprintf(stderr, "usage: bri index [-v] [-i <index_filename.bri>] <input.bam>\n");
+    fprintf(stderr, "usage: bri index [-v -t threads -e N] [-i <index_filename.bri>] <input.bam>\n");
 }
 
 //
 int bam_read_idx_index_main(int argc, char** argv)
 {
     char* output_bri = NULL;
+	int threads = 1;
+    int every = 1;
 
     int die = 0;
     for (char c; (c = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1;) {
@@ -371,11 +389,17 @@ int bam_read_idx_index_main(int argc, char** argv)
             case 'v':
                 verbose = 1;
                 break;
+            case 't':
+                threads = atoi(optarg);
+                break;
+            case 'e':
+                every = atoi(optarg);
+                break;
         }
     }
     
     if (argc - optind < 1) {
-        fprintf(stderr, "bri index: not enough arguments\n");
+        fprintf(stderr, "[bri-index]: not enough arguments\n");
         die = 1;
     }
 
@@ -385,7 +409,11 @@ int bam_read_idx_index_main(int argc, char** argv)
     }
 
     char* input_bam = argv[optind++];
-    bam_read_idx_build(input_bam, output_bri);
+	fprintf(stderr, "[bri-index]: processing '%s' with %d threads.\n", input_bam, threads);
+    if (every != 1) {
+        fprintf(stderr, "[bri-index]: outputting every %d record.\n", every);
+    }
+    bam_read_idx_build(input_bam, output_bri, threads, every);
 
     return 0;
 }
